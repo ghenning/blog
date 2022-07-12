@@ -1,0 +1,271 @@
+
+
+
+
+
+
+
+
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Henning's Blog | Some basics on Fast Radio Burst searching </title>
+    <meta name="theme-color" content="#222222"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/popper.min.js"></script>
+    <script src="/assets/js/bootstrap4.min.js"></script>
+    <script src="/assets/js/header.js"></script>
+    <script src="/assets/css/svg-with-js/js/fontawesome-all.js"></script>
+    <link href="/assets/css/bootstrap4.min.css" rel="stylesheet">
+    <link href="/assets/css/theme.css" rel="stylesheet">
+    <link href="/assets/css/syntax.css" rel="stylesheet">
+ </head>
+
+<body>
+
+
+
+
+
+
+<script type="text/javascript">
+    WebFontConfig = {
+        google: {
+            families: ['Ubuntu::latin']
+        }
+    };
+    (function () {
+        var wf = document.createElement('script');
+        wf.src = ('https:' == document.location.protocol ? 'https' : 'http') +
+            '://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+        wf.type = 'text/javascript';
+        wf.async = 'true';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(wf, s);
+    })();
+</script>
+
+<nav class="navbar navbar-expand-lg fixed-top navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">Henning's Blog</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse"
+                data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup"
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav">
+                <a class="nav-item nav-link" href="/">/home</a>
+                <a class="nav-item nav-link" href="/archive">/archive</a>
+                <a class="nav-item nav-link" href="/tags">/tags</a>
+                <a class="nav-item nav-link" href="/about">/about</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+    <div class="wrapper">
+      <div class="content">
+        <div class="container container-center">
+          <div class="row">
+            <div class="col-md-8 offset-md-1">
+              <div class="article">
+                <div class="card">
+                  <h1><a href="/2022/07/frb-search-basics/">Some basics on Fast Radio Burst searching</a></h1>
+                  <div class="post-meta">
+                    <div class="post-time">
+                      <i class="fa fa-calendar-alt"></i>
+                      <time>11 Jul 2022</time>
+                    </div>
+                    <ul>
+                      
+                        <li><a href="/tag/science">science</a></li>
+                      
+                        <li><a href="/tag/tech">tech</a></li>
+                      
+                    </ul>
+                  </div>
+                  <div class="post-content">
+                    
+                    <p>Most of my academic career was spent looking for Fast Radio Bursts (FRBs). What are FRBs you ask? FRBs are millisecond-duration, extragalactic radio signals. That’s as far as I’ll go in describing what they are because FRBs are still an unresolved mystery and I could write multiple, long-winded posts discussing what they could or could not be.</p>
+
+<p>No, in this post I just wanted to showcase the basics of how we go about finding an FRB in data.</p>
+
+<p>First, how does typical FRB data look like? Simply put it’s a time-series of signal strength over time (think of the needle of a seismic monitor moving up and down like you’ve seen in the movies). But for FRB data we usually observe over many frequencies, meaning that we have as many lines as we have frequency channels. All these channels are averaged together, forming a single time-series.</p>
+
+<p>Electrons in space have a frequency-dependent effect on radio signals, making the signals arrive at slightly different times across the observed frequencies. This is called dispersion and needs to be accounted for when searching for FRBs. This means that in order to search the data, they need to be corrected for this delay (de-dispersed) over multiple trials. Let’s imagine we live in a world where dispersion doesn’t exist and our data are not dispersed.</p>
+
+<p>We now have a single time-series that is “not dispersed” (i.e. we’re assuming we have de-dispersed to a correct value). Now we just have to perform what we call single pulse searching. That’s usually done by matched filtering which convolves the time-series with a signal of a known shape. The convolution can be computationally expensive so usually the shape used is a boxcar filter.</p>
+
+<p>Note that I’ll be mentioning stuff like samples, time samples, and widths. These all refer to time. Radio data is not continuous in time, but rather a collection of discrete samples, adjacent in time. The size of a time sample differs between observing setups, so it’s easier to simply think in samples. This leads to widths, simply meaning X number of samples.</p>
+
+<p>There are two main convolution methods. The first one is implemented by computing a running sum for the data with a given boxcar filter size and subtracting it from the data at plus/minus the filter width. The second one is done by performing a fast Fourier transform (FFT) convolution. The magic here is that multiplication in the frequency domain corresponds to convolution in the time domain. So the time-series are transformed to the frequency domain with an FFT, multiplied by the filter, and then transformed back to the time domain with an inverse FFT. Below you’ll find a figure showing how convolution works.</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><img src="https://drive.google.com/uc?export=view&amp;id=1YV70K-0eeVyTUZHDRiBDZPL_B_CDnlbO" alt="" /></td>
+    </tr>
+    <tr>
+      <td><img src="https://drive.google.com/uc?export=view&amp;id=1Y-rIToKvXKLfbyMBpV3viqdBAfldUXYS" alt="" /></td>
+    </tr>
+    <tr>
+      <td>Convolution of time-series with a boxcar filter. <em>Left</em>: Data time-series as standard deviation from the median value over time samples. <em>Center</em>: Boxcar filter to convolve with the time-series. <em>Right</em>: Convolution of the previous two panels. The top row shows the convolution for a time-series containing an FRB, while the bottom row shows the process for a time-series containing only noise.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Although the duration of FRBs is on the scale of milliseconds, their actual duration varies a bit. This means that one boxcar width does not work for all bursts. Therefore we must try a bunch of different boxcar widths in order to see the signal spike of the FRB. The closer the boxcar width is to the actual duration of the burst, the stronger the signal looks and the chance of actually detecting the FRB increases. This is visualized in the figure below.</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><img src="https://drive.google.com/uc?export=view&amp;id=1InzjWlZUt-Z01oxfDJIR35EYq1qEDcD5" alt="" /></td>
+    </tr>
+    <tr>
+      <td>Peak signal-to-noise as a function of trial boxcar widths which are convolved with time-series containing a 20-sample wide, simulated burst. The vertical dashed line indicates a boxcar width of 20 samples. We’re assuming here that the data have been de-dispersed to the correct value.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>So, we’ve gone through the basics of searching for an FRB: matched filtering and trial boxcar widths. We’ve conveniently ignored dispersion, which adds another layer of complexity, and we’ve only looked at what we call “total intensity data” that does not factor in polarization. At its core, searching is not so difficult, but can easily become way more cumbersome.</p>
+
+<p>This post is based on a subsection of <strong><a href="https://ui.adsabs.harvard.edu/abs/2021PhDT........12H/abstract">my thesis</a></strong>. Hopefully you learned and/or enjoyed this topic. If you’re interested in more, the second chapter of my thesis is on data acquisition and searching of radio data. I might also pick more topics from my thesis to write posts about later on.</p>
+
+<p>Ok, bye.</p>
+
+                    
+
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 hidden-xs">
+              <div class="sidebar ">
+  <h2>Recent Posts</h2>
+  <ul>
+    
+    <li><a href="/2022/07/frb-search-basics/">Some basics on Fast Radio Burst searching</a></li>
+    
+    <li><a href="/2022/07/some-group-directors-are-better-than-others/">Some group directors are worse than others</a></li>
+    
+    <li><a href="/2022/07/you-know-youre-in-germany/">You know you're in Germany, right?</a></li>
+    
+    <li><a href="/2022/07/losing-my-bloginity/">Losing My Bloginity</a></li>
+    
+    <li><a href="/2018/08/table-of-content/">Table of content</a></li>
+    
+  </ul>
+</div>
+
+<div class="sidebar">
+  <h2>Tags</h2>
+  <ul class="fa-ul">
+    
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/analytics" data-toggle="tooltip" data-placement="right" title="1">
+        <span>analytics</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/blaanalytics" data-toggle="tooltip" data-placement="right" title="1">
+        <span>blaanalytics</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/code" data-toggle="tooltip" data-placement="right" title="1">
+        <span>code</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/comments" data-toggle="tooltip" data-placement="right" title="1">
+        <span>comments</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/customizations" data-toggle="tooltip" data-placement="right" title="1">
+        <span>customizations</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/germany" data-toggle="tooltip" data-placement="right" title="2">
+        <span>germany</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/images" data-toggle="tooltip" data-placement="right" title="1">
+        <span>images</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/installation" data-toggle="tooltip" data-placement="right" title="1">
+        <span>installation</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/jekyll" data-toggle="tooltip" data-placement="right" title="6">
+        <span>jekyll</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/random" data-toggle="tooltip" data-placement="right" title="1">
+        <span>random</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/science" data-toggle="tooltip" data-placement="right" title="1">
+        <span>science</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/story" data-toggle="tooltip" data-placement="right" title="2">
+        <span>story</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/tags" data-toggle="tooltip" data-placement="right" title="2">
+        <span>tags</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/tech" data-toggle="tooltip" data-placement="right" title="1">
+        <span>tech</span></a></li>
+    
+    <li><span class="fa-li"><i class="fas fa-tag"></i></span>
+            <a href="/tag/woof" data-toggle="tooltip" data-placement="right" title="1">
+        <span>woof</span></a></li>
+    
+  </ul>
+</div>
+
+            </div>
+          </div>
+        </div>
+        
+
+      </div>
+          <footer class="footer-distributed">
+      <div class="container">
+        <div class="footer">
+          <p>Henning &copy; 2022</p>
+          <!--<h6>Follow me</h6>-->
+
+<ul class="social-media">
+
+  
+    <li>
+      <a title="ghenning on Github" href="https://github.com/ghenning" target="_blank"><i class="fab fa-github fa-2x"></i></a>
+    </li>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</ul>
+
+        </div>
+      </div>
+    </footer>
+
+    </div>
+  </body>
+</html>

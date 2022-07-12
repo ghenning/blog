@@ -1,0 +1,752 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+	<channel>
+		<title>Henning's Blog</title>
+		<description>Software Developer</description>
+		<link></link>
+		<atom:link href="/feed.xml" rel="self" type="application/rss+xml" />
+		
+			<item>
+				<title>Some basics on Fast Radio Burst searching</title>
+				<description>&lt;p&gt;Most of my academic career was spent looking for Fast Radio Bursts (FRBs). What are FRBs you ask? FRBs are millisecond-duration, extragalactic radio signals. That’s as far as I’ll go in describing what they are because FRBs are still an unresolved mystery and I could write multiple, long-winded posts discussing what they could or could not be.&lt;/p&gt;
+
+&lt;p&gt;No, in this post I just wanted to showcase the basics of how we go about finding an FRB in data.&lt;/p&gt;
+
+&lt;p&gt;First, how does typical FRB data look like? Simply put it’s a time-series of signal strength over time (think of the needle of a seismic monitor moving up and down like you’ve seen in the movies). But for FRB data we usually observe over many frequencies, meaning that we have as many lines as we have frequency channels. All these channels are averaged together, forming a single time-series.&lt;/p&gt;
+
+&lt;p&gt;Electrons in space have a frequency-dependent effect on radio signals, making the signals arrive at slightly different times across the observed frequencies. This is called dispersion and needs to be accounted for when searching for FRBs. This means that in order to search the data, they need to be corrected for this delay (de-dispersed) over multiple trials. Let’s imagine we live in a world where dispersion doesn’t exist and our data are not dispersed.&lt;/p&gt;
+
+&lt;p&gt;We now have a single time-series that is “not dispersed” (i.e. we’re assuming we have de-dispersed to a correct value). Now we just have to perform what we call single pulse searching. That’s usually done by matched filtering which convolves the time-series with a signal of a known shape. The convolution can be computationally expensive so usually the shape used is a boxcar filter.&lt;/p&gt;
+
+&lt;p&gt;Note that I’ll be mentioning stuff like samples, time samples, and widths. These all refer to time. Radio data is not continuous in time, but rather a collection of discrete samples, adjacent in time. The size of a time sample differs between observing setups, so it’s easier to simply think in samples. This leads to widths, simply meaning X number of samples.&lt;/p&gt;
+
+&lt;p&gt;There are two main convolution methods. The first one is implemented by computing a running sum for the data with a given boxcar filter size and subtracting it from the data at plus/minus the filter width. The second one is done by performing a fast Fourier transform (FFT) convolution. The magic here is that multiplication in the frequency domain corresponds to convolution in the time domain. So the time-series are transformed to the frequency domain with an FFT, multiplied by the filter, and then transformed back to the time domain with an inverse FFT. Below you’ll find a figure showing how convolution works.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;&lt;img src=&quot;https://drive.google.com/uc?export=view&amp;amp;id=1YV70K-0eeVyTUZHDRiBDZPL_B_CDnlbO&quot; alt=&quot;&quot; /&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;&lt;img src=&quot;https://drive.google.com/uc?export=view&amp;amp;id=1Y-rIToKvXKLfbyMBpV3viqdBAfldUXYS&quot; alt=&quot;&quot; /&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Convolution of time-series with a boxcar filter. &lt;em&gt;Left&lt;/em&gt;: Data time-series as standard deviation from the median value over time samples. &lt;em&gt;Center&lt;/em&gt;: Boxcar filter to convolve with the time-series. &lt;em&gt;Right&lt;/em&gt;: Convolution of the previous two panels. The top row shows the convolution for a time-series containing an FRB, while the bottom row shows the process for a time-series containing only noise.&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;Although the duration of FRBs is on the scale of milliseconds, their actual duration varies a bit. This means that one boxcar width does not work for all bursts. Therefore we must try a bunch of different boxcar widths in order to see the signal spike of the FRB. The closer the boxcar width is to the actual duration of the burst, the stronger the signal looks and the chance of actually detecting the FRB increases. This is visualized in the figure below.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;&lt;img src=&quot;https://drive.google.com/uc?export=view&amp;amp;id=1InzjWlZUt-Z01oxfDJIR35EYq1qEDcD5&quot; alt=&quot;&quot; /&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Peak signal-to-noise as a function of trial boxcar widths which are convolved with time-series containing a 20-sample wide, simulated burst. The vertical dashed line indicates a boxcar width of 20 samples. We’re assuming here that the data have been de-dispersed to the correct value.&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;So, we’ve gone through the basics of searching for an FRB: matched filtering and trial boxcar widths. We’ve conveniently ignored dispersion, which adds another layer of complexity, and we’ve only looked at what we call “total intensity data” that does not factor in polarization. At its core, searching is not so difficult, but can easily become way more cumbersome.&lt;/p&gt;
+
+&lt;p&gt;This post is based on a subsection of &lt;strong&gt;&lt;a href=&quot;https://ui.adsabs.harvard.edu/abs/2021PhDT........12H/abstract&quot;&gt;my thesis&lt;/a&gt;&lt;/strong&gt;. Hopefully you learned and/or enjoyed this topic. If you’re interested in more, the second chapter of my thesis is on data acquisition and searching of radio data. I might also pick more topics from my thesis to write posts about later on.&lt;/p&gt;
+
+&lt;p&gt;Ok, bye.&lt;/p&gt;
+</description>
+				<pubDate>Mon, 11 Jul 2022 00:00:00 -0500</pubDate>
+				<link>/2022/07/frb-search-basics/</link>
+				<guid isPermaLink="true">/2022/07/frb-search-basics/</guid>
+			</item>
+		
+			<item>
+				<title>Some group directors are worse than others</title>
+				<description>&lt;p&gt;I’ve had academic group directors in both Iceland and Germany. Luckily, they are fantastic people that want you to succeed. They also understand that you need to have life outside of academia, and encourage you to do so. This post is not about them though. I just wanted to give them some praise and remind myself that I’ve been lucky so far in the director lottery.&lt;/p&gt;
+
+&lt;p&gt;This post is about the exact opposite. A director of another group at my old institute that ticks every box of what I’d not like to have in a director. I won’t be naming anyone, but people who have worked with me will immediately know who this is. Let’s call this director &lt;em&gt;D&lt;/em&gt; for short.&lt;/p&gt;
+
+&lt;p&gt;The word I’d probably use to describe &lt;em&gt;D&lt;/em&gt; is a megalomaniac (&lt;em&gt;a person who has an obsessive desire for power&lt;/em&gt;). Don’t get me wrong, &lt;em&gt;D&lt;/em&gt; is very smart and accomplished in their field and their success is deserved. However, an outside view of their group shows a cultivation of cutthroat science and a work-comes-first mentality. &lt;em&gt;D&lt;/em&gt; even denied the extremely reasonable request of the group to have a lunch table on their floor. Note that this is what it looks like from the outside, I don’t know if this is really the case when one’s in the group (the lunch table thing is real, though).&lt;/p&gt;
+
+&lt;p&gt;Now, enough speculation and on to my encounters with &lt;em&gt;D&lt;/em&gt;. My old institute is a part of an academic society with a bunch of institutes of various disciplines scattered around Germany. The society has rules which the institutes should follow. However, it seems that these rules are more like guidelines and each institute director can decide how much to-the-letter they want to follow these rules. My institute has a few group directors that swap between themselves every couple of years who is the institute director.&lt;/p&gt;
+
+&lt;p&gt;One of the rules that the institutes are supposed to follow is to provide German language courses up to a certain level (B2 if I remember correctly). Me and some others were taking these classes and we were up to something like A2/B1 level. Unfortunately for us, &lt;em&gt;D&lt;/em&gt; was the institute director at the time, and they didn’t think that enough people were taking this course and that this was a waste of money. What did &lt;em&gt;D&lt;/em&gt; do? Well, cancel the course, of course, completely ignoring the “rules”… After some complaining it was decided that those who wanted to continue to learn could find a class somewhere in the city and the institute would pay a certain amount to help cover the costs. I liked the classes that we had because it was with people I knew, free, and at the institute. Now I had to go and find a class held somewhere in the city (and deal with German customer service to find a class appropriate to my level and such), pay for it and get some of it paid back from the institute. And this was of course some months after the in-house classes were cancelled, and I hadn’t touched German for a while and had completely lost momentum and interest. So, out of spite/lazyness/inconvenience/… I decided not to take this deal and just stop my German learning.&lt;/p&gt;
+
+&lt;p&gt;And now we arrive at the more juicy interaction I’ve had with &lt;em&gt;D&lt;/em&gt; (the reason I decided to write this post). Observing with our telescope is not exactly trivial. First, a telescope proposal is required to obtain some telescope time. Then you need to coordinate with the telescope scheduling wizard (who is great by the way, just wanted to throw a little bit of positivity in here) to find a time that fits into the telescope schedule and a time when the source you want to observe is visible from the telescope. When observing, if something goes wrong (broken receiver, weather stopping observations, and a plethora of other things that can go wrong) it’s simply bad luck, you don’t get the telescope time back. Now, onto the good stuff. I was about to start my observations on a Friday night and ask the telescope operator when I can start. He tells me there’s a delay and I have to wait a bit longer. No problem, this happens all the time, some delays are bound to happen. I ask again a bit later and the operator tells me to hang on, he’s going to check what’s going on. He comes back and tells me that &lt;em&gt;D&lt;/em&gt; is up on the telescope dish doing a photoshoot! I am stunned. Roughly an hour and a half after my observations were supposed to start (out of 4 hours total) the operator finally gets back to me and says I can start observing. Why, just why, would &lt;em&gt;D&lt;/em&gt; do this. They know that the telescope schedule is tightly packed, and each hour is valuable both science-wise and money-wise. Apparently &lt;em&gt;D&lt;/em&gt; didn’t care, as they needed that sweet sweet nighttime telescope photoshoot. I thought that maybe this was for the national news or something like that, so I shouldn’t be too angry or judgemental. I also would’ve been more forgiving if &lt;em&gt;D&lt;/em&gt; had notified me (way) ahead of time that I’d lose some of my telescope time. And what was this all-important photoshoot for? Some damn science blog…&lt;/p&gt;
+
+&lt;p&gt;Ok, bye.&lt;/p&gt;
+
+</description>
+				<pubDate>Sat, 09 Jul 2022 00:00:00 -0500</pubDate>
+				<link>/2022/07/some-group-directors-are-better-than-others/</link>
+				<guid isPermaLink="true">/2022/07/some-group-directors-are-better-than-others/</guid>
+			</item>
+		
+			<item>
+				<title>You know you're in Germany, right?</title>
+				<description>&lt;p&gt;Imagine a scenario where you need to talk to someone in a bureaucratic position. You know enough German to get by on a day-to-day basis (grocery stores, restuarants, and that kind of stuff). However, the bureaucrat starts throwing out complex, 80 syllable words and you become a human question mark. You politely ask if they could switch to English, or if you could talk to someone who speaks English. The bureaucrat frowns and snarkily says a phrase commonly used in Germany:&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;“You know you’re in Germany, right?”&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;The absurdity of this phrase is hilariously depressing. Yes, I am aware of which country I’m in. Yes, my German could be better. However, English is (probably) the most widespread language in the world and is the de facto international business/science/media language. It is also the second language in (I’m guessing) the majority of European countries. Given that Germany is a 1st world country with good education (literally tops the eduaction index list) I’d expect more people to be willing to communicate in English.&lt;/p&gt;
+
+&lt;p&gt;Let’s dig a bit deeper. Around 15% percent of people in Germany are foreign nationals. Unless they get help with their registration and all that stuff, they need professional-level German to get through all the documents because Germans don’t really bother to translate documents. Looking at my city, Bonn, foreigner numbers are closer to 20%. There is a big university in the city, and the German United Nations campus is here as well. All this makes the city look very international, right? Yet somehow it looks like you’re less of a person if you’re not familiar with complex, contractual German.&lt;/p&gt;
+
+&lt;p&gt;There are reasons why my German isn’t as good as it could be (topic for another post), yet on a day-to-day basis I get by just fine. If they could translate documents and have English speaking people in bureaucratic positions, even if I’d have to make special appointments for those, Germany would take a giant leap into the modern world. This is tied to something that is pretty much non-existent in Germany, customer service, which is a big enough topic for its own post.&lt;/p&gt;
+
+&lt;p&gt;I have mostly experienced this from bureaucrats, but you hear this every now and then from others. I’ve encountered other Germans saying this to me when I discuss this problem, I’ve heard it on a train that was literally leaving Germany to another country, and in customer service.&lt;/p&gt;
+
+&lt;p&gt;This might sound a bit harsh towards Germany, but the country needs to come to terms with the reality that people from all over the world move to places all over the world for various reasons. I’m not saying Germany is a terrible place that you should place a big, red &lt;strong&gt;X&lt;/strong&gt; on it on the world map. There are good things about Germany too, and there are lots of great people here. Just compromise a little bit (that applies to me too, of course): have things available in English and I can keep improving my everyday-German.&lt;/p&gt;
+
+&lt;p&gt;Ironically, I’d wager many Germans would react to this post with &lt;em&gt;“You know you’re in Germany, right?”&lt;/em&gt;, but that’s just how the bratwurst rolls.&lt;/p&gt;
+
+&lt;p&gt;Ok, bye.&lt;/p&gt;
+
+</description>
+				<pubDate>Mon, 04 Jul 2022 00:00:00 -0500</pubDate>
+				<link>/2022/07/you-know-youre-in-germany/</link>
+				<guid isPermaLink="true">/2022/07/you-know-youre-in-germany/</guid>
+			</item>
+		
+			<item>
+				<title>Losing My Bloginity</title>
+				<description>&lt;p&gt;I originally planned on hosting this blog on Heroku through a Jekyll Docker container. For some reason it’s a frustratingly complex thing to do so I gave in and went with the more standard way of hosting it on github. Maybe I’ll write a post here at some point on that experience.&lt;/p&gt;
+
+&lt;p&gt;Since I finally started this thing, I need to come up with ideas on what to write about. I’ll probably come up with some tech-related things to write about and share stuff that I learn that could be helpful by documenting it.&lt;/p&gt;
+
+&lt;p&gt;A simple tech-blog sounds a bit dry and boring though, so I want to write about other things as well. I definitely have some stories from my golfing and science days that can be worth writing about. Sports, beer, and video games are definitely on the menu, and I could also sprinkle in some music and science topics. On top of all that I can write general updates on what’s happening in my life (without doxxing myself). That way my family and friends can keep up with my life (if they’re interested).&lt;/p&gt;
+
+&lt;p&gt;With all these various topics this will become a smorgasbord blog. Therefore I’ll try to use the tags so people can view the type of topics they want. I’ll try to keep posting on a somewhat regular basis, we’ll see what happens.&lt;/p&gt;
+
+&lt;p&gt;Ok bye.&lt;/p&gt;
+</description>
+				<pubDate>Fri, 01 Jul 2022 00:00:00 -0500</pubDate>
+				<link>/2022/07/losing-my-bloginity/</link>
+				<guid isPermaLink="true">/2022/07/losing-my-bloginity/</guid>
+			</item>
+		
+			<item>
+				<title>Table of content</title>
+				<description>&lt;p&gt;Above you can see how it looks like.&lt;/p&gt;
+
+&lt;p&gt;To enable it add a &lt;code class=&quot;highlighter-rouge&quot;&gt;toc&lt;/code&gt; variable to the front matter of your post:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-md&quot; data-lang=&quot;md&quot;&gt;layout: post
+title: Table of content
+date:   2018-08-03 11:07
+description: For some big articles you can use table on content
+toc: true           &amp;lt;=========== this one&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;You can also customize it by styling &lt;code class=&quot;highlighter-rouge&quot;&gt;.toc&lt;/code&gt; class in &lt;strong&gt;theme.scss&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;This solution is based on &lt;a href=&quot;https://github.com/allejo/jekyll-toc&quot;&gt;github.com/allejo/jekyll-toc&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h1 id=&quot;some-random-text&quot;&gt;Some random text&lt;/h1&gt;
+&lt;p&gt;Moments its musical age explain. But extremity sex now education concluded earnestly her continual. Oh furniture acuteness suspected continual ye something frankness. Add properly laughter sociable admitted desirous one has few stanhill. Opinion regular in perhaps another enjoyed no engaged he at. It conveying he continual ye suspected as necessary. Separate met packages shy for kindness.&lt;/p&gt;
+
+&lt;h2 id=&quot;second-level-random-text&quot;&gt;Second level random text&lt;/h2&gt;
+&lt;p&gt;Boy favourable day can introduced sentiments entreaties. Noisier carried of in warrant because. So mr plate seems cause chief widen first. Two differed husbands met screened his. Bed was form wife out ask draw. Wholly coming at we no enable. Offending sir delivered questions now new met. Acceptance she interested new boisterous day discretion celebrated.&lt;/p&gt;
+
+&lt;h2 id=&quot;another-second-level-random-text&quot;&gt;Another second level random text&lt;/h2&gt;
+&lt;p&gt;Both rest of know draw fond post as. It agreement defective to excellent. Feebly do engage of narrow. Extensive repulsive belonging depending if promotion be zealously as. Preference inquietude ask now are dispatched led appearance. Small meant in so doubt hopes. Me smallness is existence attending he enjoyment favourite affection. Delivered is to ye belonging enjoyment preferred. Astonished and acceptance men two discretion. Law education recommend did objection how old.&lt;/p&gt;
+
+&lt;h3 id=&quot;third-level-text&quot;&gt;Third level text&lt;/h3&gt;
+&lt;p&gt;How promotion excellent curiosity yet attempted happiness. Gay prosperous impression had conviction. For every delay death ask style. Me mean able my by in they. Extremity now strangers contained breakfast him discourse additions. Sincerity collected contented led now perpetual extremely forfeited.&lt;/p&gt;
+
+&lt;h1 id=&quot;some-more-random-text&quot;&gt;Some more random text&lt;/h1&gt;
+&lt;p&gt;Over fact all son tell this any his. No insisted confined of weddings to returned to debating rendered. Keeps order fully so do party means young. Table nay him jokes quick. In felicity up to graceful mistaken horrible consider. Abode never think to at. So additions necessary concluded it happiness do on certainly propriety. On in green taken do offer witty of.&lt;/p&gt;
+
+&lt;h2 id=&quot;second-level-random-text-1&quot;&gt;Second level random text&lt;/h2&gt;
+&lt;p&gt;Received overcame oh sensible so at an. Formed do change merely to county it. Am separate contempt domestic to to oh. On relation my so addition branched. Put hearing cottage she norland letters equally prepare too. Replied exposed savings he no viewing as up. Soon body add him hill. No father living really people estate if. Mistake do produce beloved demesne if am pursuit.&lt;/p&gt;
+
+&lt;h2 id=&quot;another-second-level-random-text-1&quot;&gt;Another second level random text&lt;/h2&gt;
+&lt;p&gt;Her old collecting she considered discovered. So at parties he warrant oh staying. Square new horses and put better end. Sincerity collected happiness do is contented. Sigh ever way now many. Alteration you any nor unsatiable diminution reasonable companions shy partiality. Leaf by left deal mile oh if easy. Added woman first get led joy not early jokes.&lt;/p&gt;
+
+&lt;h2 id=&quot;and-one-more&quot;&gt;And one more&lt;/h2&gt;
+&lt;p&gt;It allowance prevailed enjoyment in it. Calling observe for who pressed raising his. Can connection instrument astonished unaffected his motionless preference. Announcing say boy precaution unaffected difficulty alteration him. Above be would at so going heard. Engaged at village at am equally proceed. Settle nay length almost ham direct extent. Agreement for listening remainder get attention law acuteness day. Now whatever surprise resolved elegance indulged own way outlived.&lt;/p&gt;
+</description>
+				<pubDate>Fri, 03 Aug 2018 11:07:00 -0500</pubDate>
+				<link>/2018/08/table-of-content/</link>
+				<guid isPermaLink="true">/2018/08/table-of-content/</guid>
+			</item>
+		
+			<item>
+				<title>Table styles</title>
+				<description>&lt;p&gt;Below are the examples of the default table styling.&lt;/p&gt;
+
+&lt;h2 id=&quot;simple-table&quot;&gt;Simple table&lt;/h2&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;First Header&lt;/th&gt;
+      &lt;th&gt;Second Header&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Content from cell 1&lt;/td&gt;
+      &lt;td&gt;Content from cell 2&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Content in the first column&lt;/td&gt;
+      &lt;td&gt;Content in the second column&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;Markdown&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-raw&quot; data-lang=&quot;raw&quot;&gt;|First Header | Second Header|
+|------------ | -------------|
+|Content from cell 1 | Content from cell 2|
+|Content in the first column | Content in the second column|&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2 id=&quot;custom-styles&quot;&gt;Custom styles&lt;/h2&gt;
+
+&lt;p&gt;It is also possible to change a bit table styles by applying CSS classes. By default there are two classes available:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;.wide&lt;/code&gt; - makes table width 100%&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;table class=&quot;wide&quot;&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;First Header&lt;/th&gt;
+      &lt;th&gt;Second Header&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Content from cell 1&lt;/td&gt;
+      &lt;td&gt;Content from cell 2&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Content in the first column&lt;/td&gt;
+      &lt;td&gt;Content in the second column&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;Markdown - note the last line&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-markdown&quot; data-lang=&quot;markdown&quot;&gt;|First Header | Second Header|
+|------------ | -------------|
+|Content from cell 1 | Content from cell 2|
+|Content in the first column | Content in the second column|
+{:.wide}&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;.inner-borders&lt;/code&gt; - shows inner borders&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;table class=&quot;inner-borders&quot;&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;First Header&lt;/th&gt;
+      &lt;th&gt;Second Header&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Content from cell 1&lt;/td&gt;
+      &lt;td&gt;Content from cell 2&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Content in the first column&lt;/td&gt;
+      &lt;td&gt;Content in the second column&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;Markdown - note the last line&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-raw&quot; data-lang=&quot;raw&quot;&gt;|First Header | Second Header|
+|------------ | -------------|
+|Content from cell 1 | Content from cell 2|
+|Content in the first column | Content in the second column|
+{:.inner-borders}&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;You can add more such classes by putting them inside &lt;strong&gt;theme.scss&lt;/strong&gt;. Here is how the above mentioned classes are defined:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-scss&quot; data-lang=&quot;scss&quot;&gt;&lt;span class=&quot;nt&quot;&gt;table&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;.wide&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;nl&quot;&gt;width&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;100%&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;nl&quot;&gt;max-width&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;100%&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;nt&quot;&gt;table&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;.inner-borders&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;nl&quot;&gt;border-collapse&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;collapse&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;nl&quot;&gt;border-style&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;hidden&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;td&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nl&quot;&gt;border&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;1px&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;solid&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;#5e5e5e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2 id=&quot;few-more-examples-from-kramdown-documentation&quot;&gt;Few more examples from kramdown &lt;a href=&quot;https://kramdown.gettalong.org/syntax.html#tables&quot;&gt;documentation&lt;/a&gt;:&lt;/h2&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Default aligned&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Left aligned&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Center aligned&lt;/th&gt;
+      &lt;th style=&quot;text-align: right&quot;&gt;Right aligned&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;First body part&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Second cell&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;Third cell&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;fourth cell&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Second line&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;foo&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;strong&lt;/strong&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;baz&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Third line&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;quux&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;baz&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;bar&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Second body&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt; &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;2 line&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt; &lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+  &lt;tfoot&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Footer row&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt; &lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tfoot&gt;
+&lt;/table&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;Table header row, two table bodies and a table footer row&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-raw&quot; data-lang=&quot;raw&quot;&gt;|-----------------+------------+-----------------+----------------|
+| Default aligned |Left aligned| Center aligned  | Right aligned  |
+|-----------------|:-----------|:---------------:|---------------:|
+| First body part |Second cell | Third cell      | fourth cell    |
+| Second line     |foo         | **strong**      | baz            |
+| Third line      |quux        | baz             | bar            |
+|-----------------+------------+-----------------+----------------|
+| Second body     |            |                 |                |
+| 2 line          |            |                 |                |
+|=================+============+=================+================|
+| Footer row      |            |                 |                |
+|-----------------+------------+-----------------+----------------|&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;hr /&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Default aligned&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Left aligned&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Center aligned&lt;/th&gt;
+      &lt;th style=&quot;text-align: right&quot;&gt;Right aligned&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;First body part&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Second cell&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;Third cell&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;fourth cell&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Second line&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;foo&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;strong&lt;/strong&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;baz&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Third line&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;quux&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;baz&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;bar&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Second body&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt; &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;2 line&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt; &lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+  &lt;tfoot&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Footer row&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt; &lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tfoot&gt;
+&lt;/table&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;Same as above but shorter&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-raw&quot; data-lang=&quot;raw&quot;&gt;|---
+| Default aligned | Left aligned | Center aligned | Right aligned
+|-|:-|:-:|-:
+| First body part | Second cell | Third cell | fourth cell
+| Second line |foo | **strong** | baz
+| Third line |quux | baz | bar
+|---
+| Second body
+| 2 line
+|===
+| Footer row&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+</description>
+				<pubDate>Fri, 09 Feb 2018 11:07:00 -0600</pubDate>
+				<link>/2018/02/table-styles/</link>
+				<guid isPermaLink="true">/2018/02/table-styles/</guid>
+			</item>
+		
+			<item>
+				<title>Jekyll Dark Clean Theme</title>
+				<description>&lt;p&gt;Here is a sample post for Jekyll-Clean-Dark theme.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;get it from &lt;a href=&quot;https://github.com/streetturtle/jekyll-clean-dark&quot;&gt;github&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;see the &lt;a href=&quot;http://pavelmakhov.com/jekyll-clean-dark&quot;&gt;live demo&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;see it &lt;a href=&quot;http://pavelmakhov.com&quot;&gt;in action on my blog&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This theme was created on top of &lt;a href=&quot;https://scotte.github.io&quot;&gt;Jekyll Clean theme&lt;/a&gt; by Scotte.&lt;/p&gt;
+
+&lt;p&gt;This theme uses some parts of Twitter Bootstrap, which allows it looks nice on a mobile devices using a collapsable nav bar and hiding the sidebar.&lt;/p&gt;
+
+&lt;p&gt;Here how it looks like on some portable devices:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/iphone_portrait.PNG&quot; alt=&quot;My helpful screenshot&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;iPhone 5 portrait&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/iphone_landscape.PNG&quot; alt=&quot;My helpful screenshot&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;iPhone 5 landscape&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/ipad_portrait.PNG&quot; alt=&quot;My helpful screenshot&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;iPad mini portrait&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/ipad_landscape.PNG&quot; alt=&quot;My helpful screenshot&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;iPad mini landscape&lt;/em&gt;&lt;/p&gt;
+</description>
+				<pubDate>Thu, 01 Dec 2016 10:25:06 -0600</pubDate>
+				<link>/2016/12/jekyll-clean-theme/</link>
+				<guid isPermaLink="true">/2016/12/jekyll-clean-theme/</guid>
+			</item>
+		
+			<item>
+				<title>Text formatting</title>
+				<description>&lt;h1 id=&quot;text-formatting-example&quot;&gt;Text formatting example&lt;/h1&gt;
+
+&lt;p&gt;Some examples of text formatting for some common text elements.&lt;/p&gt;
+
+&lt;h1 id=&quot;headers&quot;&gt;Headers&lt;/h1&gt;
+
+&lt;h1 id=&quot;header1&quot;&gt;Header1&lt;/h1&gt;
+
+&lt;h2 id=&quot;header2&quot;&gt;Header2&lt;/h2&gt;
+
+&lt;h3 id=&quot;header3&quot;&gt;Header3&lt;/h3&gt;
+
+&lt;h4 id=&quot;header4&quot;&gt;Header4&lt;/h4&gt;
+
+&lt;h1 id=&quot;emphasis&quot;&gt;Emphasis&lt;/h1&gt;
+
+&lt;p&gt;Italics: &lt;code class=&quot;highlighter-rouge&quot;&gt;*asterisks*&lt;/code&gt; -&amp;gt; &lt;em&gt;asterisks&lt;/em&gt; or &lt;code class=&quot;highlighter-rouge&quot;&gt;_underscores_&lt;/code&gt; -&amp;gt; &lt;em&gt;underscores&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;Bold: &lt;code class=&quot;highlighter-rouge&quot;&gt;**asterisks**&lt;/code&gt; -&amp;gt; &lt;strong&gt;asterisks&lt;/strong&gt; or &lt;code class=&quot;highlighter-rouge&quot;&gt;__underscores__&lt;/code&gt; -&amp;gt; &lt;strong&gt;underscores&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;You also can combine them: &lt;code class=&quot;highlighter-rouge&quot;&gt;**asterisks and _underscores_**&lt;/code&gt; -&amp;gt; &lt;strong&gt;asterisks and &lt;em&gt;underscores&lt;/em&gt;&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;h1 id=&quot;blockquotes-and-notes&quot;&gt;Blockquotes and notes&lt;/h1&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;Blockquotes&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Blockquotes&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Using very cool &lt;a href=&quot;http://kramdown.gettalong.org/quickref.html#block-attributes&quot;&gt;feature&lt;/a&gt; of kramdown which allows to assign any attribute to a block-level element I’ve added note and warning:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;Note 
+&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;: .note&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;blockquote class=&quot;note&quot;&gt;
+  &lt;p&gt;Note&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;Warning 
+&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;: .note .warning&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;blockquote class=&quot;note warning&quot;&gt;
+  &lt;p&gt;Warning&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h1 id=&quot;keyboard-buttons&quot;&gt;Keyboard buttons&lt;/h1&gt;
+
+&lt;p&gt;In case you need to show some keyboard shortcuts, like &lt;code class=&quot;key highlighter-rouge&quot;&gt;Ctrl&lt;/code&gt;+&lt;code class=&quot;key highlighter-rouge&quot;&gt;A&lt;/code&gt; use following construction:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;Ctrl&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;: .key&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;+&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;A&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;:.key&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Example of keyboard shortcuts in a terminal:&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;key highlighter-rouge&quot;&gt;Ctrl&lt;/code&gt; + &lt;code class=&quot;key highlighter-rouge&quot;&gt;A&lt;/code&gt; = move cursor to beginning of line&lt;br /&gt;
+&lt;code class=&quot;key highlighter-rouge&quot;&gt;Ctrl&lt;/code&gt; + &lt;code class=&quot;key highlighter-rouge&quot;&gt;E&lt;/code&gt; = move cursor to end of line&lt;br /&gt;
+&lt;code class=&quot;key highlighter-rouge&quot;&gt;Ctrl&lt;/code&gt; + &lt;code class=&quot;key highlighter-rouge&quot;&gt;C&lt;/code&gt; = kills the current process.&lt;br /&gt;
+&lt;code class=&quot;key highlighter-rouge&quot;&gt;Ctrl&lt;/code&gt; + &lt;code class=&quot;key highlighter-rouge&quot;&gt;Z&lt;/code&gt; = sends the current process to the background.&lt;br /&gt;
+&lt;code class=&quot;key highlighter-rouge&quot;&gt;Ctrl&lt;/code&gt; + &lt;code class=&quot;key highlighter-rouge&quot;&gt;D&lt;/code&gt; = logs you out.&lt;br /&gt;
+&lt;code class=&quot;key highlighter-rouge&quot;&gt;Ctrl&lt;/code&gt; + &lt;code class=&quot;key highlighter-rouge&quot;&gt;R&lt;/code&gt; = finds the last command matching the entered letters.&lt;/p&gt;
+</description>
+				<pubDate>Wed, 02 Nov 2016 11:25:06 -0500</pubDate>
+				<link>/2016/11/text-formatting/</link>
+				<guid isPermaLink="true">/2016/11/text-formatting/</guid>
+			</item>
+		
+			<item>
+				<title>Code snippets</title>
+				<description>&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;For code syntax coloration I’m using Darcula theme from Intellij IDEA, which I’ve found in this post &lt;a href=&quot;http://smasue.github.io/pygments-darcula&quot;&gt;Darcula theme for Pygments&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;XML with line numbers (linenos flag), &lt;code class=&quot;highlighter-rouge&quot;&gt;{% highlight xml linenos %}&lt;/code&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-xml&quot; data-lang=&quot;xml&quot;&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;rss&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;version=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;2.0&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;xmlns:atom=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;http://www.w3.org/2005/Atom&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;channel&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;title&amp;gt;&lt;/span&gt;{{ site.name }}&lt;span class=&quot;nt&quot;&gt;&amp;lt;/title&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;description&amp;gt;&lt;/span&gt;{{ site.description }}&lt;span class=&quot;nt&quot;&gt;&amp;lt;/description&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;link&amp;gt;&lt;/span&gt;{{site.baseurl | prepend:site.url}}&lt;span class=&quot;nt&quot;&gt;&amp;lt;/link&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;atom:link&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;href=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;{{site.baseurl | prepend:site.url}}/feed.xml&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;rel=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;self&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;type=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;application/rss+xml&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+    {% for post in site.posts limit:10 %}
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;item&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;title&amp;gt;&lt;/span&gt;{{ post.title }}&lt;span class=&quot;nt&quot;&gt;&amp;lt;/title&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;description&amp;gt;&lt;/span&gt;{{ post.content | xml_escape }}&lt;span class=&quot;nt&quot;&gt;&amp;lt;/description&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;pubDate&amp;gt;&lt;/span&gt;{{ post.date | date: &quot;%a, %d %b %Y %H:%M:%S %z&quot; }}&lt;span class=&quot;nt&quot;&gt;&amp;lt;/pubDate&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;link&amp;gt;&lt;/span&gt;{{post.url | prepend:site.baseurl | prepend:site.url}}&lt;span class=&quot;nt&quot;&gt;&amp;lt;/link&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;guid&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;isPermaLink=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;true&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;{{post.url | prepend:site.baseurl | prepend:site.url}}&lt;span class=&quot;nt&quot;&gt;&amp;lt;/guid&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;/item&amp;gt;&lt;/span&gt;
+    {% endfor %}
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/channel&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/rss&amp;gt;&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;JSON&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;employees&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:[&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;firstName&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;John&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;lastName&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;Doe&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;firstName&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;Anna&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;lastName&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;Smith&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;firstName&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;Peter&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;lastName&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;Jones&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;SQL&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sql&quot; data-lang=&quot;sql&quot;&gt;&lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cm_content_nodes&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;alf_node&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;alf_qname&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;qn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;alf_namespace&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ns&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;qn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ns_id&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;type_qname_id&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;qn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uri&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'http://www.alfresco.org/model/content/1.0'&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;qn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;local_name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'content'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;Java&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;&lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;getToken&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;HttpClient&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;client&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;UnsupportedEncodingException&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;nc&quot;&gt;Cookie&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cookies&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;client&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getState&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getCookies&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Cookie&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cookie&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cookies&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;){&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cookie&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getName&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;equals&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Alfresco-CSRFToken&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)){&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;URLDecoder&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;decode&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cookie&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getValue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;UTF-8&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;To add name to the code snippet, as in the examples above, add following construction before the snippet:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;Java
+&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;:.filename&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;% highlight java %&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+</description>
+				<pubDate>Sat, 01 Oct 2016 11:25:06 -0500</pubDate>
+				<link>/2016/10/code-syntax-highlighting/</link>
+				<guid isPermaLink="true">/2016/10/code-syntax-highlighting/</guid>
+			</item>
+		
+			<item>
+				<title>Customizations</title>
+				<description>&lt;h1 id=&quot;accent-color&quot;&gt;Accent color&lt;/h1&gt;
+
+&lt;p&gt;Accent color is color for some important elements, such as links, buttons, icons. Currently accent color is &lt;button class=&quot;btn&quot; style=&quot;background-color:#3CA2A2; color:#444444&quot;&gt;#3CA2A2&lt;/button&gt;. This theme has some more predefined colors available in &lt;strong&gt;theme.scss&lt;/strong&gt;:&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;theme.scss&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-scss&quot; data-lang=&quot;scss&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// Several accent colors, choose one or create your own!&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$accent-color&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;#3CA2A2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;     &lt;span class=&quot;c1&quot;&gt;// original =)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// $accent-color: #C38FD6;   velvet&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// $accent-color: #8FD6B3;   greenish&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// $accent-color: #35B4DE;   bluish&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// $accent-color: #D2E354;   yellowish&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// $accent-color: #52B54B;   green&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;You can use one of them (just click the button below to see accent color in action) or define your own!&lt;/p&gt;
+
+&lt;p&gt;&lt;button class=&quot;btn&quot; style=&quot;background-color:#C38FD6; color:#444444&quot;&gt;#C38FD6&lt;/button&gt;, &lt;button class=&quot;btn&quot; style=&quot;background-color:#8FD6B3; color:#444444&quot;&gt;#8FD6B3&lt;/button&gt;, &lt;button class=&quot;btn&quot; style=&quot;background-color:#35B4DE; color:#444444&quot;&gt;#35B4DE&lt;/button&gt;, &lt;button class=&quot;btn&quot; style=&quot;background-color:#D2E354; color:#444444&quot;&gt;#D2E354&lt;/button&gt;, &lt;button class=&quot;btn&quot; style=&quot;background-color:#52B54B; color:#444444&quot;&gt;#52B54B&lt;/button&gt;.&lt;/p&gt;
+
+&lt;script&gt;
+  $('.btn').click(function(){
+    var color = $(this).text();
+    [].forEach.call($('a'), function(item) {
+      item.style.color = color
+    })
+  })
+&lt;/script&gt;
+
+&lt;style&gt;
+  .label{
+    cursor: default;
+    border-radius: 5px;
+    padding: 5px 8px;
+  }
+&lt;/style&gt;
+
+&lt;h1 id=&quot;other-colors&quot;&gt;Other colors&lt;/h1&gt;
+
+&lt;p&gt;As Jekyll comes with support of SASS I put colors in variables. Here are the ones which could be easily changed:&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;theme.scss&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-scss&quot; data-lang=&quot;scss&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$font-color&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;#dddddd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$background-color&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;#292929&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$post-panel-color&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;#444&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$footer-background-color&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;#292c2f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$note-color&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;#87CEFA&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$warning-color&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;#ffff00&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h1 id=&quot;background&quot;&gt;Background&lt;/h1&gt;
+
+&lt;p&gt;It is also possible to change the background pattern and color. This theme comes with few patterns pre-installed – you can check them by clicking on the images below. Or check the &lt;a href=&quot;https://www.transparenttextures.com/&quot;&gt;transparenttextures.com&lt;/a&gt; – it has tons of different patterns for background.&lt;/p&gt;
+
+&lt;style&gt;
+.pattern-list{
+    list-style-type: none;
+    padding: 0;
+}
+.pattern{
+    height: 100px;
+    box-shadow: 0 0 3px 2px rgba(0,0,0,.1);
+
+}
+.pattern:hover {
+    box-shadow: 0 0 3px 2px rgba(0,0,0,.3);
+    transition: box-shadow .2s ease;
+    cursor: pointer;
+}
+.smthg{
+    max-width: none !important;
+}
+.col-sm-6 {
+    padding: 5px !important;
+}
+&lt;/style&gt;
+
+&lt;ul class=&quot;pattern-list&quot;&gt;
+&lt;li class=&quot;col-sm-6&quot;&gt;&lt;div class=&quot;pattern&quot; style=&quot;background-image:url('/assets/css/pics/background/3px-tile.png')&quot;&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li class=&quot;col-sm-6&quot;&gt;&lt;div class=&quot;pattern&quot; style=&quot;background-image:url('/assets/css/pics/background/asfalt-light.png')&quot;&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li class=&quot;col-sm-6&quot;&gt;&lt;div class=&quot;pattern&quot; style=&quot;background-image:url('/assets/css/pics/background/black-linen.png')&quot;&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li class=&quot;col-sm-6&quot;&gt;&lt;div class=&quot;pattern&quot; style=&quot;background-image:url('/assets/css/pics/background/food.png')&quot;&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li class=&quot;col-sm-6&quot;&gt;&lt;div class=&quot;pattern&quot; style=&quot;background-image:url('/assets/css/pics/background/gplay.png')&quot;&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li class=&quot;col-sm-6&quot;&gt;&lt;div class=&quot;pattern&quot; style=&quot;background-image:url('/assets/css/pics/background/green-dust-and-scratches.png')&quot;&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li class=&quot;col-sm-6&quot;&gt;&lt;div class=&quot;pattern&quot; style=&quot;background-image:url('/assets/css/pics/background/hexellence.png')&quot;&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li class=&quot;col-sm-6&quot;&gt;&lt;div class=&quot;pattern&quot; style=&quot;background-image:url('/assets/css/pics/background/random-grey-variations.png')&quot;&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li class=&quot;col-sm-6&quot;&gt;&lt;div class=&quot;pattern&quot; style=&quot;background-image:url('/assets/css/pics/background/shley-tree-1.png')&quot;&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li class=&quot;col-sm-6&quot;&gt;&lt;div class=&quot;pattern&quot; style=&quot;background-image:url('/assets/css/pics/background/subtle-grey.png')&quot;&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li class=&quot;col-sm-6&quot;&gt;&lt;div class=&quot;pattern&quot; style=&quot;background-image:url('/assets/css/pics/background/xv.png')&quot;&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li class=&quot;col-sm-6&quot;&gt;&lt;div class=&quot;pattern&quot; style=&quot;background-image:url('/assets/css/pics/background/triangles.png')&quot;&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;script&gt;
+  $('.pattern').click(function(){
+    var source = this.style.backgroundImage;
+    document.getElementsByTagName('body')[0].style.backgroundImage = source;
+    console.log(&quot;url('&quot; + source + &quot;'))&quot;);
+  })
+&lt;/script&gt;
+
+&lt;p&gt;To change the color go to the &lt;strong&gt;theme.scss&lt;/strong&gt; and change the &lt;code class=&quot;highlighter-rouge&quot;&gt;background-pattern&lt;/code&gt; variable to the name of the pattern image file. To use custom pattern, download it from &lt;a href=&quot;https://www.transparenttextures.com/&quot;&gt;transparenttextures.com&lt;/a&gt; and place it under &lt;strong&gt;css/pics/background/&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;theme.scss&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-scss&quot; data-lang=&quot;scss&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// use this or pick any from /css/pics/background folder or from transparenttextures.com&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$background-pattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'random-grey-variations.png'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+</description>
+				<pubDate>Tue, 20 Sep 2016 11:25:06 -0500</pubDate>
+				<link>/2016/09/customizations/</link>
+				<guid isPermaLink="true">/2016/09/customizations/</guid>
+			</item>
+		
+	</channel>
+</rss>
